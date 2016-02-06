@@ -1,4 +1,4 @@
 # DeviseRateViewer
-Simply display devise rate in OSX Menu Bar App
+Simply display devise rate in OSX menu bar.
 
 *Based on [Fixer.io](http://fixer.io/)*
