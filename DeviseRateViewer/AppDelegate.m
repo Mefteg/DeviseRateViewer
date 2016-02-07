@@ -23,7 +23,7 @@ static NSString* RSC_SYMBOLS        = @"symbols";
 static NSString* RSC_PREFERENCES    = @"preferences";
 static NSString* EXT_JSON           = @"json";
 
-static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
+static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 
 @interface AppDelegate ()
 
