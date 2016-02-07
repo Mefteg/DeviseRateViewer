@@ -10,14 +10,16 @@
 
 static NSString* URL = @"https://api.fixer.io/latest";
 
-static NSString* KEY_BASE   = @"base";
-static NSString* KEY_RATES  = @"rates";
-static NSString* KEY_FROM   = @"from";
-static NSString* KEY_TO     = @"to";
+static NSString* KEY_BASE       = @"base";
+static NSString* KEY_SYMBOLS    = @"symbols";
+static NSString* KEY_RATES      = @"rates";
+static NSString* KEY_FROM       = @"from";
+static NSString* KEY_TO         = @"to";
 
 static NSString* DEFAULT_FROM   = @"CAD";
 static NSString* DEFAULT_TO     = @"EUR";
 
+static NSString* RSC_SYMBOLS        = @"symbols";
 static NSString* RSC_PREFERENCES    = @"preferences";
 static NSString* EXT_JSON           = @"json";
 
@@ -28,6 +30,7 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
 @property (strong, nonatomic) NSStatusItem *statusItem;
 @property (strong, nonatomic) NSURLSession *urlSession;
 
+@property (strong, nonatomic) NSDictionary *symbols;
 @property (strong, nonatomic) NSMutableDictionary *preferences;
 
 @property (strong, nonatomic) NSTimer *timerRequestDeviceRate;
@@ -40,7 +43,7 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     // Insert code here to initialize your application
     
     self.statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
-    [self.statusItem setTitle:@"-€"];
+    [self.statusItem setTitle:@"-"];
     [self.statusItem setAction:@selector(itemClicked:)];
     
     self.urlSession = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate: self delegateQueue: [NSOperationQueue mainQueue]];
@@ -48,7 +51,10 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     // set default preferences
     [self setDefaultPreferences];
     
-    // read stored preferences (if available)
+    // read currencies symbols
+    [self readSymbols];
+    
+    // read stored preferences
     [self readPreferences];
     
     // launch the request
@@ -70,8 +76,26 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     [self.preferences setObject:DEFAULT_TO forKey:KEY_TO];
 }
 
+- (void)readSymbols {
+    NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_SYMBOLS withExtension:EXT_JSON];
+    NSError *error = nil;
+    NSFileHandle* fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:&error];
+    
+    // if the file is reachable
+    if (fileHandle != nil) {
+        // read data from file
+        NSData* data = [fileHandle readDataToEndOfFile];
+        
+        // parse to json
+        self.symbols = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        
+        if (error != nil) {
+            NSLog(@"Error parsing JSON symbols.");
+        }
+    }
+}
+
 - (void)readPreferences {
-    //NSURL* url = [NSURL URLWithString:PATH_PREFERENCES];
     NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
     NSError *error = nil;
     NSFileHandle* fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:&error];
@@ -111,7 +135,7 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
 }
 
 - (void)requestDeviseRate {
-    NSString* urlStr = [NSString stringWithFormat:@"%@?%@=%@", URL, KEY_BASE, [self.preferences valueForKey:KEY_FROM]];
+    NSString* urlStr = [NSString stringWithFormat:@"%@?%@=%@&%@=%@", URL, KEY_BASE, [self.preferences valueForKey:KEY_FROM], KEY_SYMBOLS, [self.preferences valueForKey:KEY_TO]];
     NSURL *url = [NSURL URLWithString:urlStr];
     
     
@@ -144,13 +168,14 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     if (error == nil) {
         NSDictionary *rates = [jsonArray valueForKey:KEY_RATES];
         
-        float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:[self.preferences valueForKey:KEY_TO]]] floatValue];
+        NSString* currencyCode = [self.preferences valueForKey:KEY_TO];
+        float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:currencyCode]] floatValue];
         
-        [self.statusItem setTitle:[NSString stringWithFormat:@"%0.2f€", rate]];
+        [self.statusItem setTitle:[NSString stringWithFormat:@"%0.2f%@", rate, [self.symbols valueForKey:currencyCode]]];
     }
     else {
         NSLog(@"Error parsing JSON.");
-        [self.statusItem setTitle:@"X€"];
+        [self.statusItem setTitle:@"X"];
     }
 }
 
