@@ -411,6 +411,7 @@
 				COMBINE_HIDPI_IMAGES = YES;
 				INFOPLIST_FILE = DeviseRateViewer/Info.plist;
 				LD_RUNPATH_SEARCH_PATHS = "$(inherited) @executable_path/../Frameworks";
+				MTL_ENABLE_DEBUG_INFO = NO;
 				PRODUCT_BUNDLE_IDENTIFIER = ladybugriders.DeviseRateViewer;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
@@ -487,6 +488,7 @@
 				E237B7AD1C664E9E00A6487D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E237B7AE1C664E9E00A6487D /* Build configuration list for PBXNativeTarget "DeviseRateViewerTests" */ = {
 			isa = XCConfigurationList;
@@ -495,6 +497,7 @@
 				E237B7B01C664E9E00A6487D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 		E237B7B11C664E9E00A6487D /* Build configuration list for PBXNativeTarget "DeviseRateViewerUITests" */ = {
 			isa = XCConfigurationList;
@@ -503,6 +506,7 @@
 				E237B7B31C664E9E00A6487D /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
 	};
