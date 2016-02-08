@@ -27,12 +27,18 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 
 @interface AppDelegate ()
 
-@property (strong, nonatomic) NSStatusItem *statusItem;
+// UI
+@property (strong, nonatomic) NSStatusItem *rateItem;
+@property (strong) IBOutlet NSMenu *rateMenu;
+
+// HTTP REQUEST
 @property (strong, nonatomic) NSURLSession *urlSession;
 
+// DATA
 @property (strong, nonatomic) NSDictionary *symbols;
 @property (strong, nonatomic) NSMutableDictionary *preferences;
 
+// TIMER
 @property (strong, nonatomic) NSTimer *timerRequestDeviceRate;
 
 @end
@@ -42,9 +48,14 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     
-    self.statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
-    [self.statusItem setTitle:@"-"];
-    [self.statusItem setAction:@selector(itemClicked:)];
+    // init main menu item
+    self.rateItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
+    [self.rateItem setTitle:@"-"];
+    [self.rateItem setHighlightMode:YES];
+    [self.rateItem setAction:@selector(rateItemClicked:)];
+    
+    // set the menu
+    self.rateItem.menu = self.rateMenu;
     
     self.urlSession = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate: self delegateQueue: [NSOperationQueue mainQueue]];
     
@@ -79,58 +90,71 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 - (void)readSymbols {
     NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_SYMBOLS withExtension:EXT_JSON];
     NSError *error = nil;
-    NSFileHandle* fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:&error];
     
-    // if the file is reachable
-    if (fileHandle != nil) {
-        // read data from file
-        NSData* data = [fileHandle readDataToEndOfFile];
-        
+    // read data
+    NSString* input = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
+    
+    if (error == nil) {
+        // convert string to data
+        NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
         // parse to json
-        self.symbols = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
         
-        if (error != nil) {
-            NSLog(@"Error parsing JSON symbols.");
+        if (error == nil) {
+            self.symbols = json;
         }
+        else {
+            NSLog(@"Error parsing JSON preferences.");
+        }
+    }
+    else {
+        NSLog(@"Error writing preferences");
     }
 }
 
 - (void)readPreferences {
     NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
     NSError *error = nil;
-    NSFileHandle* fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:&error];
     
-    // if the file is reachable
-    if (fileHandle != nil) {
-        // read data from file
-        NSData* data = [fileHandle readDataToEndOfFile];
-        
+    // read data
+    NSString* input = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
+    
+    if (error == nil) {
+        // convert string to data
+        NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
         // parse to json
-        self.preferences = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
         
-        if (error != nil) {
+        if (error == nil) {
+            self.preferences = json;
+        }
+        else {
             NSLog(@"Error parsing JSON preferences.");
         }
+    }
+    else {
+        NSLog(@"Error writing preferences");
     }
 }
 
 - (void)writePreferences {
     NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
     NSError *error = nil;
-    NSFileHandle* fileHandle = [NSFileHandle fileHandleForWritingToURL:url error:&error];
     
-    // if the file is reachable
-    if (fileHandle != nil) {
-        // convert json to data
-        NSData* data = [NSJSONSerialization dataWithJSONObject:self.preferences options:kNilOptions error:&error];
+    NSData* data = [NSJSONSerialization dataWithJSONObject:self.preferences options:NSJSONWritingPrettyPrinted error:&error];
+    
+    if (error == nil) {
+        // convert data to string
+        NSString* output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        // write string to file
+        [output writeToURL:url atomically:YES encoding:NSUTF8StringEncoding error:&error];
         
-        if (error == nil) {
-            // write data to file
-            [fileHandle writeData:data];
+        if (error != nil) {
+            NSLog(@"Error writing preferences");
         }
-        else {
-            NSLog(@"Error parsing JSON preferences.");
-        }
+    }
+    else {
+        NSLog(@"Error parsing JSON preferences.");
     }
 }
 
@@ -151,8 +175,12 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 // UI
 //
 
-- (void)itemClicked:(id)sender {
+- (void)rateItemClicked:(id)sender {
     [self requestDeviseRate];
+}
+
+- (IBAction)closeItemClicked:(id)sender {
+    [[NSApplication sharedApplication] terminate:self];
 }
 
 // NSURLSessionDelegate
@@ -171,11 +199,11 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
         NSString* currencyCode = [self.preferences valueForKey:KEY_TO];
         float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:currencyCode]] floatValue];
         
-        [self.statusItem setTitle:[NSString stringWithFormat:@"%0.2f%@", rate, [self.symbols valueForKey:currencyCode]]];
+        [self.rateItem setTitle:[NSString stringWithFormat:@"%0.2f%@", rate, [self.symbols valueForKey:currencyCode]]];
     }
     else {
         NSLog(@"Error parsing JSON.");
-        [self.statusItem setTitle:@"X"];
+        [self.rateItem setTitle:@"X"];
     }
 }
 
