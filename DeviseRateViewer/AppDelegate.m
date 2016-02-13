@@ -218,6 +218,10 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
     [self requestDeviseRate];
 }
 
+- (IBAction)updateItemClicked:(id)sender {
+    [self requestDeviseRate];
+}
+
 - (IBAction)closeItemClicked:(id)sender {
     [[NSApplication sharedApplication] terminate:self];
 }

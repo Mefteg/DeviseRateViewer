@@ -29,6 +29,12 @@
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <menu key="submenu" title="To" systemMenu="help" id="SQG-OW-5vd"/>
                 </menuItem>
+                <menuItem title="Update" id="9cu-6M-s74">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="updateItemClicked:" target="Voe-Tx-rLC" id="vRn-94-qYm"/>
+                    </connections>
+                </menuItem>
                 <menuItem title="Close" id="8dT-wl-bBS">
                     <modifierMask key="keyEquivalentModifierMask"/>
                     <connections>
