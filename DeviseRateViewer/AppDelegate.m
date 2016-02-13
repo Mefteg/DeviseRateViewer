@@ -31,6 +31,9 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 @property (strong, nonatomic) NSStatusItem *rateItem;
 @property (strong) IBOutlet NSMenu *rateMenu;
 
+@property (strong) IBOutlet NSMenu *fromMenu;
+@property (strong) IBOutlet NSMenu *toMenu;
+
 // HTTP REQUEST
 @property (strong, nonatomic) NSURLSession *urlSession;
 
@@ -98,7 +101,7 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
         // convert string to data
         NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
         // parse to json
-        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
         
         if (error == nil) {
             self.symbols = json;
@@ -123,7 +126,7 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
         // convert string to data
         NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
         // parse to json
-        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
         
         if (error == nil) {
             self.preferences = json;
@@ -172,10 +175,46 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
     [self requestDeviseRate];
 }
 
+-(void)updateFromAndToListWithRates:(NSDictionary*)rates {
+    [self.fromMenu removeAllItems];
+    [self.toMenu removeAllItems];
+    
+    NSArray *keys = [self.symbols allKeys];
+    NSArray *sortedKeys = [keys sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    
+    for (id key in sortedKeys) {
+        NSString* keyStr = [NSString stringWithFormat:@"%@", key];
+        
+        NSMenuItem* fromItem = [self.fromMenu addItemWithTitle:keyStr action:@selector(fromItemClicked:) keyEquivalent:keyStr];
+        if (keyStr == [self.preferences valueForKey:KEY_FROM]) {
+            [fromItem setState:NSOnState];
+        }
+        
+        NSMenuItem* toItem = [self.toMenu addItemWithTitle:keyStr action:@selector(toItemClicked:) keyEquivalent:keyStr];
+        if (keyStr == [self.preferences valueForKey:KEY_TO]) {
+            [toItem setState:NSOnState];
+        }
+    }
+}
+
 // UI
 //
 
 - (void)rateItemClicked:(id)sender {
+    [self requestDeviseRate];
+}
+
+- (void)fromItemClicked:(id)sender {
+    NSString* keyEquiv = [sender keyEquivalent];
+    [self.preferences setObject:keyEquiv forKey:KEY_FROM];
+    
+    [self requestDeviseRate];
+}
+
+- (void)toItemClicked:(id)sender {
+    NSString* keyEquiv = [sender keyEquivalent];
+    [self.preferences setObject:keyEquiv forKey:KEY_TO];
+    
     [self requestDeviseRate];
 }
 
@@ -200,6 +239,8 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
         float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:currencyCode]] floatValue];
         
         [self.rateItem setTitle:[NSString stringWithFormat:@"%0.2f%@", rate, [self.symbols valueForKey:currencyCode]]];
+        
+        [self updateFromAndToListWithRates:rates];
     }
     else {
         NSLog(@"Error parsing JSON.");
