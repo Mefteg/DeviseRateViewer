@@ -10,26 +10,38 @@
 
 static NSString* URL = @"https://api.fixer.io/latest";
 
-static NSString* KEY_BASE   = @"base";
-static NSString* KEY_RATES  = @"rates";
-static NSString* KEY_FROM   = @"from";
-static NSString* KEY_TO     = @"to";
+static NSString* KEY_BASE       = @"base";
+static NSString* KEY_SYMBOLS    = @"symbols";
+static NSString* KEY_RATES      = @"rates";
+static NSString* KEY_FROM       = @"from";
+static NSString* KEY_TO         = @"to";
 
 static NSString* DEFAULT_FROM   = @"CAD";
 static NSString* DEFAULT_TO     = @"EUR";
 
+static NSString* RSC_SYMBOLS        = @"symbols";
 static NSString* RSC_PREFERENCES    = @"preferences";
 static NSString* EXT_JSON           = @"json";
 
-static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
+static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 6 * 60 * 60; // in seconds
 
 @interface AppDelegate ()
 
-@property (strong, nonatomic) NSStatusItem *statusItem;
+// UI
+@property (strong, nonatomic) NSStatusItem *rateItem;
+@property (strong) IBOutlet NSMenu *rateMenu;
+
+@property (strong) IBOutlet NSMenu *fromMenu;
+@property (strong) IBOutlet NSMenu *toMenu;
+
+// HTTP REQUEST
 @property (strong, nonatomic) NSURLSession *urlSession;
 
+// DATA
+@property (strong, nonatomic) NSDictionary *symbols;
 @property (strong, nonatomic) NSMutableDictionary *preferences;
 
+// TIMER
 @property (strong, nonatomic) NSTimer *timerRequestDeviceRate;
 
 @end
@@ -39,16 +51,24 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
 - (void)applicationDidFinishLaunching:(NSNotification *)aNotification {
     // Insert code here to initialize your application
     
-    self.statusItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
-    [self.statusItem setTitle:@"-€"];
-    [self.statusItem setAction:@selector(itemClicked:)];
+    // init main menu item
+    self.rateItem = [[NSStatusBar systemStatusBar] statusItemWithLength:NSVariableStatusItemLength];
+    [self.rateItem setTitle:@"-"];
+    [self.rateItem setHighlightMode:YES];
+    [self.rateItem setAction:@selector(rateItemClicked:)];
+    
+    // set the menu
+    self.rateItem.menu = self.rateMenu;
     
     self.urlSession = [NSURLSession sessionWithConfiguration:[NSURLSessionConfiguration defaultSessionConfiguration] delegate: self delegateQueue: [NSOperationQueue mainQueue]];
     
     // set default preferences
     [self setDefaultPreferences];
     
-    // read stored preferences (if available)
+    // read currencies symbols
+    [self readSymbols];
+    
+    // read stored preferences
     [self readPreferences];
     
     // launch the request
@@ -70,48 +90,79 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     [self.preferences setObject:DEFAULT_TO forKey:KEY_TO];
 }
 
-- (void)readPreferences {
-    //NSURL* url = [NSURL URLWithString:PATH_PREFERENCES];
-    NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
+- (void)readSymbols {
+    NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_SYMBOLS withExtension:EXT_JSON];
     NSError *error = nil;
-    NSFileHandle* fileHandle = [NSFileHandle fileHandleForReadingFromURL:url error:&error];
     
-    // if the file is reachable
-    if (fileHandle != nil) {
-        // read data from file
-        NSData* data = [fileHandle readDataToEndOfFile];
-        
+    // read data
+    NSString* input = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
+    
+    if (error == nil) {
+        // convert string to data
+        NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
         // parse to json
-        self.preferences = [NSJSONSerialization JSONObjectWithData:data options:kNilOptions error:&error];
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
         
-        if (error != nil) {
+        if (error == nil) {
+            self.symbols = json;
+        }
+        else {
             NSLog(@"Error parsing JSON preferences.");
         }
+    }
+    else {
+        NSLog(@"Error writing preferences");
+    }
+}
+
+- (void)readPreferences {
+    NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
+    NSError *error = nil;
+    
+    // read data
+    NSString* input = [[NSString alloc] initWithContentsOfURL:url encoding:NSUTF8StringEncoding error:&error];
+    
+    if (error == nil) {
+        // convert string to data
+        NSData* data = [input dataUsingEncoding:NSUTF8StringEncoding];
+        // parse to json
+        NSMutableDictionary* json = [NSJSONSerialization JSONObjectWithData:data options:NSJSONReadingMutableContainers error:&error];
+        
+        if (error == nil) {
+            self.preferences = json;
+        }
+        else {
+            NSLog(@"Error parsing JSON preferences.");
+        }
+    }
+    else {
+        NSLog(@"Error writing preferences");
     }
 }
 
 - (void)writePreferences {
     NSURL* url = [[NSBundle mainBundle] URLForResource:RSC_PREFERENCES withExtension:EXT_JSON];
     NSError *error = nil;
-    NSFileHandle* fileHandle = [NSFileHandle fileHandleForWritingToURL:url error:&error];
     
-    // if the file is reachable
-    if (fileHandle != nil) {
-        // convert json to data
-        NSData* data = [NSJSONSerialization dataWithJSONObject:self.preferences options:kNilOptions error:&error];
+    NSData* data = [NSJSONSerialization dataWithJSONObject:self.preferences options:NSJSONWritingPrettyPrinted error:&error];
+    
+    if (error == nil) {
+        // convert data to string
+        NSString* output = [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding];
+        // write string to file
+        [output writeToURL:url atomically:YES encoding:NSUTF8StringEncoding error:&error];
         
-        if (error == nil) {
-            // write data to file
-            [fileHandle writeData:data];
+        if (error != nil) {
+            NSLog(@"Error writing preferences");
         }
-        else {
-            NSLog(@"Error parsing JSON preferences.");
-        }
+    }
+    else {
+        NSLog(@"Error parsing JSON preferences.");
     }
 }
 
 - (void)requestDeviseRate {
-    NSString* urlStr = [NSString stringWithFormat:@"%@?%@=%@", URL, KEY_BASE, [self.preferences valueForKey:KEY_FROM]];
+    NSString* urlStr = [NSString stringWithFormat:@"%@?%@=%@&%@=%@", URL, KEY_BASE, [self.preferences valueForKey:KEY_FROM], KEY_SYMBOLS, [self.preferences valueForKey:KEY_TO]];
     NSURL *url = [NSURL URLWithString:urlStr];
     
     
@@ -124,11 +175,55 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     [self requestDeviseRate];
 }
 
+-(void)updateFromAndToListWithRates:(NSDictionary*)rates {
+    [self.fromMenu removeAllItems];
+    [self.toMenu removeAllItems];
+    
+    NSArray *keys = [self.symbols allKeys];
+    NSArray *sortedKeys = [keys sortedArrayUsingSelector:@selector(caseInsensitiveCompare:)];
+    
+    for (id key in sortedKeys) {
+        NSString* keyStr = [NSString stringWithFormat:@"%@", key];
+        
+        NSMenuItem* fromItem = [self.fromMenu addItemWithTitle:keyStr action:@selector(fromItemClicked:) keyEquivalent:keyStr];
+        if (keyStr == [self.preferences valueForKey:KEY_FROM]) {
+            [fromItem setState:NSOnState];
+        }
+        
+        NSMenuItem* toItem = [self.toMenu addItemWithTitle:keyStr action:@selector(toItemClicked:) keyEquivalent:keyStr];
+        if (keyStr == [self.preferences valueForKey:KEY_TO]) {
+            [toItem setState:NSOnState];
+        }
+    }
+}
+
 // UI
 //
 
-- (void)itemClicked:(id)sender {
+- (void)rateItemClicked:(id)sender {
     [self requestDeviseRate];
+}
+
+- (void)fromItemClicked:(id)sender {
+    NSString* keyEquiv = [sender keyEquivalent];
+    [self.preferences setObject:keyEquiv forKey:KEY_FROM];
+    
+    [self requestDeviseRate];
+}
+
+- (void)toItemClicked:(id)sender {
+    NSString* keyEquiv = [sender keyEquivalent];
+    [self.preferences setObject:keyEquiv forKey:KEY_TO];
+    
+    [self requestDeviseRate];
+}
+
+- (IBAction)updateItemClicked:(id)sender {
+    [self requestDeviseRate];
+}
+
+- (IBAction)closeItemClicked:(id)sender {
+    [[NSApplication sharedApplication] terminate:self];
 }
 
 // NSURLSessionDelegate
@@ -144,13 +239,16 @@ static NSTimeInterval INTERVAL_REQUEST_DEVISE_RATE = 5 * 60; // in seconds
     if (error == nil) {
         NSDictionary *rates = [jsonArray valueForKey:KEY_RATES];
         
-        float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:[self.preferences valueForKey:KEY_TO]]] floatValue];
+        NSString* currencyCode = [self.preferences valueForKey:KEY_TO];
+        float rate = [[NSString stringWithFormat:@"%@",[rates valueForKey:currencyCode]] floatValue];
         
-        [self.statusItem setTitle:[NSString stringWithFormat:@"%0.2f€", rate]];
+        [self.rateItem setTitle:[NSString stringWithFormat:@"%0.2f%@", rate, [self.symbols valueForKey:currencyCode]]];
+        
+        [self updateFromAndToListWithRates:rates];
     }
     else {
         NSLog(@"Error parsing JSON.");
-        [self.statusItem setTitle:@"X€"];
+        [self.rateItem setTitle:@"X"];
     }
 }
 

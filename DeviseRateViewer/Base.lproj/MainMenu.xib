@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <document type="com.apple.InterfaceBuilder3.Cocoa.XIB" version="3.0" toolsVersion="9531" systemVersion="15D21" targetRuntime="MacOSX.Cocoa" propertyAccessControl="none" useAutolayout="YES" customObjectInstantitationMethod="direct">
     <dependencies>
-        <deployment identifier="macosx"/>
         <plugIn identifier="com.apple.InterfaceBuilder.CocoaPlugin" version="9531"/>
     </dependencies>
     <objects>
@@ -12,7 +11,38 @@
         </customObject>
         <customObject id="-1" userLabel="First Responder" customClass="FirstResponder"/>
         <customObject id="-3" userLabel="Application" customClass="NSObject"/>
-        <customObject id="Voe-Tx-rLC" customClass="AppDelegate"/>
+        <customObject id="Voe-Tx-rLC" customClass="AppDelegate">
+            <connections>
+                <outlet property="fromMenu" destination="Wj5-TE-2qR" id="xn8-Aw-h4b"/>
+                <outlet property="rateMenu" destination="py4-bb-CtS" id="Ri7-UW-k3g"/>
+                <outlet property="toMenu" destination="SQG-OW-5vd" id="CDt-dK-0ES"/>
+            </connections>
+        </customObject>
         <customObject id="YLy-65-1bz" customClass="NSFontManager"/>
+        <menu title="Rate" id="py4-bb-CtS">
+            <items>
+                <menuItem title="From" id="tXV-jx-4bb">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="From" id="Wj5-TE-2qR"/>
+                </menuItem>
+                <menuItem title="To" id="W0L-t6-vgj">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <menu key="submenu" title="To" systemMenu="help" id="SQG-OW-5vd"/>
+                </menuItem>
+                <menuItem title="Update" id="9cu-6M-s74">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="updateItemClicked:" target="Voe-Tx-rLC" id="vRn-94-qYm"/>
+                    </connections>
+                </menuItem>
+                <menuItem title="Close" id="8dT-wl-bBS">
+                    <modifierMask key="keyEquivalentModifierMask"/>
+                    <connections>
+                        <action selector="closeItemClicked:" target="Voe-Tx-rLC" id="iK9-jU-11R"/>
+                    </connections>
+                </menuItem>
+            </items>
+            <point key="canvasLocation" x="321.5" y="426.5"/>
+        </menu>
     </objects>
 </document>

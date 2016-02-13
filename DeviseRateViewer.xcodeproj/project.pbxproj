@@ -14,6 +14,7 @@
 		E237B79C1C664E9E00A6487D /* DeviseRateViewerTests.m in Sources */ = {isa = PBXBuildFile; fileRef = E237B79B1C664E9E00A6487D /* DeviseRateViewerTests.m */; };
 		E237B7A71C664E9E00A6487D /* DeviseRateViewerUITests.m in Sources */ = {isa = PBXBuildFile; fileRef = E237B7A61C664E9E00A6487D /* DeviseRateViewerUITests.m */; };
 		E237B7B71C666BE600A6487D /* preferences.json in Resources */ = {isa = PBXBuildFile; fileRef = E237B7B61C666BE600A6487D /* preferences.json */; };
+		E25303501C67D2DB0061EDE8 /* symbols.json in Resources */ = {isa = PBXBuildFile; fileRef = E253034F1C67D2DB0061EDE8 /* symbols.json */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		E237B7A61C664E9E00A6487D /* DeviseRateViewerUITests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = DeviseRateViewerUITests.m; sourceTree = "<group>"; };
 		E237B7A81C664E9E00A6487D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E237B7B61C666BE600A6487D /* preferences.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = preferences.json; sourceTree = "<group>"; };
+		E253034F1C67D2DB0061EDE8 /* symbols.json */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.json; path = symbols.json; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -105,6 +107,7 @@
 				E237B7921C664E9D00A6487D /* Info.plist */,
 				E237B78A1C664E9D00A6487D /* Supporting Files */,
 				E237B7B61C666BE600A6487D /* preferences.json */,
+				E253034F1C67D2DB0061EDE8 /* symbols.json */,
 			);
 			path = DeviseRateViewer;
 			sourceTree = "<group>";
@@ -239,6 +242,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				E237B7B71C666BE600A6487D /* preferences.json in Resources */,
+				E25303501C67D2DB0061EDE8 /* symbols.json in Resources */,
 				E237B78E1C664E9D00A6487D /* Assets.xcassets in Resources */,
 				E237B7911C664E9D00A6487D /* MainMenu.xib in Resources */,
 			);
