@@ -8,7 +8,7 @@
 
 #import "AppDelegate.h"
 
-static NSString* URL = @"https://api.fixer.io/latest";
+static NSString* URL = @"https://exchangeratesapi.io/api/latest";
 
 static NSString* KEY_BASE       = @"base";
 static NSString* KEY_SYMBOLS    = @"symbols";
